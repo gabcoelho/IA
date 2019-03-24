@@ -185,7 +185,9 @@ def menu():
            
     elif task == '2':
         caminho = []
-        print('\nMenor caminho encontrado -> '+ str(grafo.buscaCustoUniforme('Arad', 'Sibiu',caminho)))
+        verticeInicial = input("De que cidade gostaria de iniciar sua busca? ")
+        verticeFinal = input("Em qual cidade gostaria de finalizar? ")
+        print('\nMenor caminho encontrado -> '+ str(grafo.buscaCustoUniforme(verticeInicial, verticeFinal,caminho)))
         print('\n')
         continueMenu = input("Gostaria de realizar uma nova tarefa? \n    S/N:  ")
         if continueMenu == "S" or continueMenu == "s":
