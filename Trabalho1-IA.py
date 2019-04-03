@@ -25,14 +25,22 @@ class Vertice:
         return self.adjacentes[vizinho]
 
 class Graph:
-    tempo = 0
 
     def __init__(self):
         self.vertices = {}
         self.num_vertices = 0
+        self.tempo = 0
+        self.caminho = []
 
     def __iter__(self):
         return iter(self.vertices.values())
+
+    def __str__(self):
+        string = ''
+        for key in sorted(list(self.vertices.keys())):
+            string += ' %s' %(self.vertices[key]) + ' | Descoberto: ' + str(self.vertices[key].descoberto) + ' | Terminado: ' + str(self.vertices[key].terminado) + '|  Cor: ' +  str(self.vertices[key].cor) + '\n'
+        return string
+
 
     def addVertice(self, v):
         self.num_vertices = self.num_vertices + 1
@@ -62,50 +70,52 @@ class Graph:
         for key in sorted(list(self.vertices.keys())):
             print('Cidade: '+key  +' %s' %(self.vertices[key]) )
     
-    def _buscaProfundidade(self,verticeInicial, verticeFinal, tempo):
-        if verticeInicial in self.vertices and verticeFinal != verticeInicial:
-            for key in self.vertices:
-                if verticeInicial == key: 
-                    self.vertices[key].cor = 'vermelho'
-                    self.vertices[key].descoberto = tempo
-                    tempo += 1
-                else:
-                    break
-                for vizinho in self.vertices[key].adjacentes:
-                    if self.vertices[vizinho.id].cor == 'preto':
-                        self._buscaProfundidade(vizinho.id,verticeFinal,tempo)
-                self.vertices[vizinho.id].cor = 'azul'
-                self.vertices[vizinho.id].terminado = tempo
-                self.vertices[vizinho.id].descoberto = 1
-                tempo += 1   
-       
-    def buscaProfundidade(self, verticeInicial, verticeFinal):
-        global tempo
-        tempo = 1
-        self._buscaProfundidade(verticeInicial, verticeFinal, tempo)
+    def buscaProfundidade(self,verticeInicial, verticeFinal, distancia):
+        self.vertices[verticeInicial].cor = 'vermelho'
+        self.vertices[verticeInicial].descoberto = self.tempo
+        self.tempo += 1
+        self.caminho.append(verticeInicial)
+        for vizinho in self.vertices[verticeInicial].adjacentes:
+            if self.vertices[vizinho.id].cor == 'preto' and vizinho.id != verticeFinal:
+                distancia = distancia + vizinho.getDistancia(self.vertices[verticeInicial])
+                self.buscaProfundidade(vizinho.id,verticeFinal, distancia)
+            elif self.vertices[vizinho.id].cor == 'preto' and vizinho.id == verticeFinal:
+                distancia = distancia + vizinho.getDistancia(self.vertices[verticeInicial])
+                return (self.caminho, distancia)
+            elif self.vertices[vizinho.id].cor == 'azul' and vizinho.id == verticeFinal:
+                distancia = distancia + vizinho.getDistancia(self.vertices[verticeInicial])
+                return (self.caminho, distancia)
+            self.vertices[vizinho.id].cor = 'azul'
+            self.vertices[vizinho.id].terminado = self.tempo
+            self.vertices[vizinho.id].descoberto = 1
+            self.tempo += 1  
+        return (None, None)
 
-    def buscaCustoUniforme(self,verticeInicio,verticeFinal,caminho):
+       
+    def buscaCustoUniforme(self,verticeInicio,verticeFinal,caminho, distanciaTotal):
         if verticeInicio and verticeFinal in self.vertices:
-            menorDistancia = 0
-            distanciaTotal = 0
-            verticeAtual = verticeInicio   
-            while verticeAtual != verticeFinal:   
-                for key in self.vertices:
-                    if verticeInicio == key: 
-                        self.vertices[key].cor = 'vermelho'
-                        self.vertices[key].descoberto = 1
-                    for vizinho in self.vertices[key].adjacentes:
-                        distancias = self.vertices[key].adjacentes.values()
-                        menorDistancia = min(distancias)
-                        if vizinho.getDistancia(self.vertices[key]) == menorDistancia:
-                            if self.vertices[vizinho.id].cor == 'preto':
-                                self.vertices[vizinho.id].cor = 'azul'
-                                self.vertices[vizinho.id].descoberto = 1
-                                distanciaTotal += menorDistancia
-                                verticeAtual = vizinho.id
-                                caminho.append(verticeAtual)
-                                self.buscaCustoUniforme(verticeAtual,verticeFinal,caminho)
-                                return caminho
+            self.vertices[verticeInicio].cor = 'vermelho'
+            self.vertices[verticeInicio].descoberto = 1
+            caminho.append(verticeInicio)
+        if verticeInicio == verticeFinal:
+            return caminho, distanciaTotal
+        for vizinho in self.vertices[verticeInicio].adjacentes:
+            distancias = self.vertices[verticeInicio].adjacentes.values()
+            menorDistancia = min(distancias)
+            if vizinho.getDistancia(self.vertices[verticeInicio]) == menorDistancia and self.vertices[vizinho.id].cor == 'preto':
+                distanciaTotal += menorDistancia 
+                self.buscaCustoUniforme(vizinho.id,verticeFinal,caminho,distanciaTotal)
+            elif vizinho.getDistancia(self.vertices[verticeInicio]) != menorDistancia and self.vertices[vizinho.id].cor == 'preto':
+                distanciaTotal += vizinho.getDistancia(self.vertices[verticeInicio]) 
+                self.buscaCustoUniforme(vizinho.id,verticeFinal,caminho,distanciaTotal)
+            elif vizinho.id == verticeFinal:
+                return caminho, distanciaTotal
+        self.vertices[vizinho.id].cor = 'azul'
+        self.vertices[vizinho.id].descoberto = 1
+        return None, None
+
+   # def buscaAprofundamentoIterativo():
+        
 
     def printGrafoComDados(self):
         print('\n')
@@ -172,8 +182,9 @@ def menu():
     if task == '1':
         verticeInicial = input("De que cidade gostaria de iniciar sua busca? ")
         verticeFinal = input("Em qual cidade gostaria de finalizar? ")
-        grafo.buscaProfundidade(verticeInicial, verticeFinal)
-        grafo.printGrafoComDados()
+        d = 0
+        caminho, distancia = grafo.buscaProfundidade(verticeInicial, verticeFinal,d)
+        print('Caminho: ' + str(caminho), ' -     Distancia percorrida: ' + str(distancia))
         print('\n')
         continueMenu = input("Gostaria de realizar uma nova tarefa? \n    S/N:  ")
         if continueMenu == "S" or continueMenu == "s":
@@ -187,7 +198,9 @@ def menu():
         caminho = []
         verticeInicial = input("De que cidade gostaria de iniciar sua busca? ")
         verticeFinal = input("Em qual cidade gostaria de finalizar? ")
-        print('\nMenor caminho encontrado -> '+ str(grafo.buscaCustoUniforme(verticeInicial, verticeFinal,caminho)))
+        distanciaTotal = 0 
+        caminho, distancia = grafo.buscaCustoUniforme(verticeInicial, verticeFinal,caminho, distanciaTotal)
+        print('\nMenor caminho encontrado -> '+ str(caminho) + '    Distancia percorrida: ' + str(distancia))
         print('\n')
         continueMenu = input("Gostaria de realizar uma nova tarefa? \n    S/N:  ")
         if continueMenu == "S" or continueMenu == "s":
