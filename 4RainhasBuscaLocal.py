@@ -77,4 +77,4 @@ def solucaoComBuscaLocal(tamanho):
   
  
 n = int(input('Tamanho do tabuleiro (n): '))
-solucaoComBuscaGulosa(n)
+solucaoComBuscaLocal(n)
